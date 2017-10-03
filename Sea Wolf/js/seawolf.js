@@ -1,4 +1,4 @@
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', {preload:preload, create:create, update:update, render:render});
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', {preload:preload, create:create, update:update});
 
 var background;
 var player;
@@ -343,11 +343,6 @@ function update() {
 	game.physics.arcade.overlap(mine, playerWeapon.bullets, playerHitsMine, null, this);
 
 };//end update
-
-//used for debugging
-function render() {
-	game.debug.text('fps: ' + game.time.fps, 20, game.world.height - 20, 'red');
-}//end render
 
 //check torp position
 function scaleTorp(bullet) {
