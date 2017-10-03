@@ -29,7 +29,8 @@ var shipExplosion;
 var torpFire;
 var sonar;
 var subspawn;
-var mineKill;
+var explosions;
+var sink;
 
 function preload() {
 	game.load.image('background', 'assets/backgrounds/underwater1.png');
@@ -41,8 +42,10 @@ function preload() {
 	game.load.image('destroyer', 'assets/sprites/destroyer.png');
 	game.load.image('tanker1', 'assets/sprites/tanker1.png');
 	game.load.image('tanker2', 'assets/sprites/tanker2.png');
-	game.load.image('sub', 'assets/sprites/sub.png');
+	game.load.spritesheet('submarine', 'assets/sprites/submarine.png', 16, 10);
 	game.load.image('mine', 'assets/sprites/mine.png');
+	game.load.spritesheet('kaboom', 'assets/animations/mineBoom.png', 16, 16);
+	game.load.spritesheet('sinking', 'assets/animations/sinkingShip.png', 16, 10);
 	game.load.audio('powerUp', 'assets/sounds/Powerup4.wav');
 	game.load.audio('shipExplosion', 'assets/sounds/Explosion.wav');
 	game.load.audio('torpFire', 'assets/sounds/shoot.wav');
@@ -78,9 +81,13 @@ function create() {
 	playerWeapon.bullets.setAll('scale.y', 2);
 	playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
 	playerWeapon.bulletAngleOffset = 90;
-	playerWeapon.bulletSpeed = 300;
+	playerWeapon.bulletSpeed = 325;
 	playerWeapon.fireRate = 100;
-	playerWeapon.onFire.add(function() {torpFire.play()}, this);
+	playerWeapon.onFire.add(function() {
+		if(!torpFire.isPlaying) {
+			torpFire.play();
+		}
+	}, this);
 
 	//setup player - targetBox
 	player = game.add.sprite(0, 20, 'targetBox');
@@ -100,7 +107,16 @@ function create() {
 	//sub group
 	sub = game.add.group();
 
+	//mine explosions
+	explosions = game.add.group();
+	explosions.createMultiple(10, 'kaboom');
+	explosions.forEach(setup, this);
 
+	//ship sinking
+	sink = game.add.group();
+	sink.createMultiple(10, 'sinking');
+	sink.forEach(shipSetup, this);
+	
 	//spawn random ships at random intervals in random places
 	spawnTimer = game.time.create(false);
 	spawnTimer.loop(1500, spawnChance, this);
@@ -209,7 +225,7 @@ function Vel(target) {
 		case 'cruiser': setVel(200);
 		break;
 
-		case 'destroyer': setVel(250);
+		case 'destroyer': setVel(225);
 		break;
 
 		case 'tanker1': setVel(100);
@@ -234,12 +250,15 @@ function setVel(speed) {
 }
 
 function spawnSub() {
-	subs = sub.create(Phaser.Utils.randomChoice(0, game.world.width), Phaser.Math.random(50, game.world.height / 2), 'sub');
+	subs = sub.create(Phaser.Utils.randomChoice(0, game.world.width), Phaser.Math.random(50, game.world.height / 2), 'submarine');
+	subs.frame = 1;
 	subs.scale.setTo(-3, 3);
 	subs.anchor.setTo(0.5, 0.5);
 	game.physics.enable(subs, Phaser.Physics.ARCADE);
 	subs.checkWorldBounds = true;
 	subs.events.onOutOfBounds.add(killOffScreen, this);
+	subs.animations.add('submerge');
+	subs.play('submerge', 1, false, false);
 
 	if(subs.position.x <= 0) {
 		subs.body.velocity.x = 225;
@@ -263,6 +282,21 @@ function spawnMine() {
 	} 
 }
 
+function setup(ele) {
+	ele.scale.x = 3;
+	ele.scale.y = 3;
+	ele.anchor.x = 0.2;
+	ele.anchor.y = 0.3;
+	ele.animations.add('kaboom');
+}
+
+function shipSetup(ship) {
+	ship.scale.x = 3;
+	ship.scale.y = 3;
+	ship.anchor.x = 0.5;
+	ship.anchor.y = 0.5;
+	ship.animations.add('sinking');
+}
 
 function killOffScreen(ele) {
 	ele.kill();
@@ -335,7 +369,12 @@ function collisionHandler(target, bullet) {
 	target.kill();
 	points(target);
 	shipExplosion.play();
-	ship.remove(target)
+	ship.remove(target);
+
+	var hit = sink.getFirstExists(false);
+	hit.reset(target.body.x, target.body.y);
+	hit.play('sinking', 30, false, true);
+
 }
 
 function points(target) {
@@ -358,7 +397,7 @@ function points(target) {
 		case 'tanker2': score += 100; scoreText.text = 'Score: ' + score;
 		break;
 
-		case 'sub': score += 1000; scoreText.text = 'Score: ' + score;
+		case 'submarine': score += 1000; scoreText.text = 'Score: ' + score;
 		break;
 	}
 }
@@ -369,6 +408,9 @@ function playerHitsMine(bomb, bullet) {
 	shipExplosion.play();
 	mine.remove(bomb);
 
+	var kill = explosions.getFirstExists(false);
+	kill.reset(bomb.body.x, bomb.body.y);
+	kill.play('kaboom', 30, false, true);
 }
 
 function playerHitsSub(submarine, bullet) {
@@ -377,4 +419,8 @@ function playerHitsSub(submarine, bullet) {
 	points(submarine);
 	shipExplosion.play();
 	sub.remove(submarine);
+
+	var hit = sink.getFirstExists(false);
+	hit.reset(submarine.body.x, submarine.body.y);
+	hit.play('sinking', 30, false, true);
 }
