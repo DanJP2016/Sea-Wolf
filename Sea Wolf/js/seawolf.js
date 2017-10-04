@@ -158,9 +158,6 @@ function create() {
 	cursors = game.input.keyboard.createCursorKeys();
 	fireButton = this.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
 
-	//debug fps
-	game.time.advancedTiming = true;
-	
 };//end create
 
 function timerTrigger() {
@@ -304,6 +301,9 @@ function killOffScreen(ele) {
 }
 
 function restart() {
+	ship.removeAll(true, false, false);
+	mine.removeAll(true, false, false);
+	sub.removeAll(true, false, false);
 	gameClock = 70;
 	score = 0;
 	extendedTime = 5000;
