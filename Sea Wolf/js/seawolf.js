@@ -334,7 +334,7 @@ function update() {
 	}
 	
 	//fire torps
-	if(fireButton.isDown) {
+	if(fireButton.isDown && gameClock > 0) {
 		playerWeapon.fire();
 	}
 
