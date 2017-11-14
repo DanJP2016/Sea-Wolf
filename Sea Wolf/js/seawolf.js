@@ -20,6 +20,7 @@ var extendedTime = 5000;
 var extTimeText;
 var timeText;
 var score = 0;
+var startText;
 var scoreText;
 var stateText;
 var fadeIn;
@@ -33,6 +34,8 @@ var explosions;
 var sink;
 
 function preload() {
+	game.scale.pageAlignHorizontally = true;
+	game.scale.pageAlignVertically = true;
 	game.load.image('background', 'assets/backgrounds/underwater1.png');
 	game.load.image('targetBox', 'assets/sprites/targetBox.png');
 	game.load.image('torp', 'assets/sprites/torpedo.png');
@@ -71,8 +74,6 @@ function create() {
 	torpFire.volume = 0.3;
 	sonar = game.add.audio('sonar');
 	subspawn = game.add.audio('subspawn');
-
-	sonar.loopFull(0.5);
 
 	//setup torpedos
 	playerWeapon = game.add.weapon(4, 'torp');
@@ -125,12 +126,8 @@ function create() {
 	gameTimer = game.time.create(false);
 	gameTimer.loop(1000, timerTrigger, this);
 
-	//start timers
-	spawnTimer.start();
-	gameTimer.start();
-
 	//setup score board
-	scoreText = game.add.text(game.world.width - 200, game.world.height - 30, 'Score: '+ score, 
+	scoreText = game.add.text(game.world.width - 260, game.world.height - 30, 'Score: '+ score, 
 				{font: '16px Press Start 2P', fill: '#ffffff'});
 	scoreText.visible = true;
 
@@ -149,15 +146,24 @@ function create() {
 				{font: '32px Press Start 2P', fill: '#ffffff', align: 'center'});
 	stateText.visible = false;
 
+	//setup startText
+	startText = game.add.text(game.world.width / 6, game.world.height / 3, 'Sea Wolf \n\n Click To Start !!',
+				{font: '32px Press Start 2P', fill: '#ffffff', align: 'center'});
+	startText.visible = true;
+
 	//setup text fade tweens
 	fadeIn = game.add.tween(extTimeText).to({alpha: 1}, 1000, 'Linear', true);
 	fadeOut = game.add.tween(extTimeText).to({alpha: 0}, 1000, 'Linear', true);
 	fadeIn.chain(fadeOut);
 
+	//start game 
+	game.input.onTap.addOnce(startGame, this);
+
 	//setup controls and fire button
 	cursors = game.input.keyboard.createCursorKeys();
 	fireButton = this.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
 
+	
 };//end create
 
 function timerTrigger() {
@@ -301,9 +307,9 @@ function killOffScreen(ele) {
 }
 
 function restart() {
-	ship.removeAll(true, false, false);
-	mine.removeAll(true, false, false);
 	sub.removeAll(true, false, false);
+	mine.removeAll(true, false, false);
+	ship.removeAll(true, false, false);
 	gameClock = 70;
 	score = 0;
 	extendedTime = 5000;
@@ -315,6 +321,12 @@ function restart() {
 	stateText.visible = false;
 }
 
+function startGame() {
+	gameTimer.start();
+	spawnTimer.start();
+	sonar.loopFull(0.5);
+	startText.visible = false;
+}
 
 function update() {
 
